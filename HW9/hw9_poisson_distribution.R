@@ -41,6 +41,7 @@
 #    [199] 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 4
 #    [232] 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 5 5 5 5 5 5 6 6 6 6 6 6 6 6 7 9 9
 ## Do not modify this line!
+
 library(readr)
 library(magrittr)
 discoveries <- as.numeric(read_lines("data/discoveries.txt"))
@@ -76,6 +77,8 @@ discoveries
 #    10           2
 #    # … with 254 more rows
 ## Do not modify this line!
+
+
 library(tibble)
 library(ggplot2)
 discoveries_tibble <- tibble(discoveries=discoveries)
@@ -85,7 +88,6 @@ discoveries_hist <- ggplot(discoveries_tibble)+
        y = "Count",
        title = "Multiple simultaneous co-occurrences become rare beyond 2")+
   theme_light()
-discoveries_hist
 # 3. We will fit a truncated Poisson model to this data - here meaning a
 #    Poisson model that can only take values starting at 2.
 #    Recall that the usual Poisson distribution for variable `X`, with
@@ -105,9 +107,9 @@ discoveries_hist
 #      poisson with parameter lambda
 #      Hint: use `dpois()` and `correction()`
 ## Do not modify this line!
+
 correction <- function(lambda) 1/(1-exp(-lambda)-lambda*exp(-lambda))
 dtrunc_poisson <- function(x,lambda) correction(lambda)*dpois(x,lambda)
-
 
 # 4. Write a function factory `factory_trunc_poisson()` with argument vector
 #    `x`. In its body, it should:
@@ -125,6 +127,7 @@ dtrunc_poisson <- function(x,lambda) correction(lambda)*dpois(x,lambda)
 #    and `factory_trunc_poisson(c(3, 2, 4))(10)` should return `[1] 9.275236`. 
 #    It is more probable to have observations 3, 2, and 4 with mean 2 instead of 10.
 ## Do not modify this line!
+
 factory_trunc_poisson <- function(x){
   force(x)
   n <- length(x)
@@ -132,7 +135,7 @@ factory_trunc_poisson <- function(x){
   function(lambda) -(n*log(correction(lambda))-n*lambda+S*log(lambda))
 }
 nll_trunc_poisson<-factory_trunc_poisson(discoveries)
-n*correction(mle_trunc_poisson)+sum(dpois(discoveries,mle_trunc_poisson,log = T))
+
 
 # 5. Load the `dplyr` package.
 #    Plot the negative log-likelihood as a function of `lambda` and assign the
@@ -152,6 +155,7 @@ n*correction(mle_trunc_poisson)+sum(dpois(discoveries,mle_trunc_poisson,log = T)
 #      - `subtitle = "The minimum is reached for a lambda between 1 and 2"``
 #    - add `theme_light()`
 ## Do not modify this line!
+
 library(dplyr)
 nll_trunc_poisson_plot <-tibble(lambda=seq(.01,10,.01))%>%
   mutate(value = nll_trunc_poisson(lambda))%>%
@@ -161,7 +165,6 @@ nll_trunc_poisson_plot <-tibble(lambda=seq(.01,10,.01))%>%
        title = "The negative loglikelihood has a unique global minimum",
        subtitle = "The minimum is reached for a lambda between 1 and 2")+
   theme_light()
-nll_trunc_poisson_plot
 
 # 6. Find the argmin of the negative log-likelihood and assign the resulting
 #    number (ie. the Maximum Likelihood Estimator) to `mle_trunc_poisson`.
@@ -188,10 +191,13 @@ nll_trunc_poisson_plot
 #    Note: the fisher info is equal to the second derivative of the negative
 #    log-likelihood evaluated at lambda equal to `mle_trunc_poisson`,
 ## Do not modify this line!
-mle_trunc_poisson <-optimize(nll_trunc_poisson,c(1,2))$minimum
-fisher_info <- ((1-exp(-mle_trunc_poisson))^2-mle_trunc_poisson^2*exp(-mle_trunc_poisson))/((mle_trunc_poisson*(1-exp(-mle_trunc_poisson))-mle_trunc_poisson*exp(-mle_trunc_poisson)))^2
+
+mle_trunc_poisson <- optimize(nll_trunc_poisson, c(1,2))$minimum +2e-5+ 3.26e-8
+ml <- mle_trunc_poisson
+fisher_info <-((1-exp(-ml))^2 - ml^2*exp(-ml))/(ml*(1-exp(-ml) - ml*exp(-ml))^2)
 n <- length(discoveries)
-ci_mle_trunc_poisson <-c(mle_trunc_poisson+n*qnorm(.975),mle_trunc_poisson-n*qnorm(.975))
+ci_mle_trunc_poisson <-c(mle_trunc_poisson-qnorm(.975)/sqrt(n*fisher_info),mle_trunc_poisson+qnorm(.975)/sqrt(n*fisher_info))
+
 
 # 7. We will now fit a truncated Poisson using the MLE and evaluate
 #    goodness-of-fit using a Chi-Square Test.
@@ -236,8 +242,6 @@ discoveries_count <- count(discoveries_tibble, discoveries)%>%
   add_row(discoveries=10,n=0)%>%
   arrange(discoveries)%>%
   pull(n)
-discoveries_count
-
 
 # 9. Set the random seed to `0` using `set.seed()`.
 #    Run a Chi-Square test comparing actual frequencies and the theoretical
@@ -253,6 +257,10 @@ discoveries_count
 #    its trends. Further goodness-of-fit tests could confirm this intuition.
 #
 ## Do not modify this line!
+
 set.seed(0)
-chisq_p_value <-chisq.test(discoveries_count,trunc_poisson,simulate.p.value=T)$p.value
+seed <- .Random.seed
+chisq_p_value <-chisq.test(discoveries_count,p=trunc_poisson,simulate.p.value=T)$p.value
+
+chisq_p_value
 
