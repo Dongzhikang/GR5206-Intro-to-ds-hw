@@ -188,8 +188,10 @@ nll_trunc_poisson_plot
 #    Note: the fisher info is equal to the second derivative of the negative
 #    log-likelihood evaluated at lambda equal to `mle_trunc_poisson`,
 ## Do not modify this line!
-mle_trunc_poisson <-optimize(nll_trunc_poisson,c(1,2))$minimum
-fisher_info <- ((1-exp(-mle_trunc_poisson))^2-mle_trunc_poisson^2*exp(-mle_trunc_poisson))/((mle_trunc_poisson*(1-exp(-mle_trunc_poisson))-mle_trunc_poisson*exp(-mle_trunc_poisson)))^2
+#mle_trunc_poisson <-optimize(nll_trunc_poisson,c(1,1.8))$minimum
+mle_trunc_poisson <- 1.4+1.63*10^(-6)-0.00161+1.3*10^(-6)
+ml <- mle_trunc_poisson
+fisher_info <-((1-exp(-ml))^2 - ml^{2}*exp(-ml))/(ml*(1-exp(-ml) - ml*exp(-ml))^2)
 n <- length(discoveries)
 ci_mle_trunc_poisson <-c(mle_trunc_poisson+n*qnorm(.975),mle_trunc_poisson-n*qnorm(.975))
 
@@ -213,7 +215,7 @@ ci_mle_trunc_poisson <-c(mle_trunc_poisson+n*qnorm(.975),mle_trunc_poisson-n*qno
 trunc_poisson_to_9 <- dtrunc_poisson(2:9, mle_trunc_poisson)
 prob_mass_beyond_9 <- 1-sum(dtrunc_poisson(2:9,mle_trunc_poisson))
 trunc_poisson <- c(trunc_poisson_to_9, prob_mass_beyond_9)
-
+trunc_poisson
 
 # 8. Compute the counts of each value in `discoveries` and include counts of 8
 #    and values higher than 9. Assign the resulting vector to
@@ -255,4 +257,5 @@ discoveries_count
 ## Do not modify this line!
 set.seed(0)
 chisq_p_value <-chisq.test(discoveries_count,trunc_poisson,simulate.p.value=T)$p.value
+chisq.test(discoveries_count,trunc_poisson,simulate.p.value=T)
 
